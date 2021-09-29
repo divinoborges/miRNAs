@@ -24,7 +24,7 @@ def train_cnn(model, x_training, y_training, x_validation, y_validation):
         os.makedirs('Results')
     checkpointer = ModelCheckpoint(filepath=model_filepath, verbose=0, save_best_only=True, mode='min')
 
-    hist = model.fit(x_training, y_training, batch_size=batch_size, epochs=500, verbose=1, callbacks=[checkpointer],
+    hist = model.fit(x_training, y_training, batch_size=batch_size, epochs=50, verbose=1, callbacks=[checkpointer],
                      validation_data=(x_validation, y_validation))
 
 
@@ -37,14 +37,14 @@ def build_cnn(x_training):
     dense1 = Dense(64, activation='relu')(pool1)
     drop1 = Dropout(0.1)(dense1)
 
-    outputs = Dense(2, activation='softmax')(drop1)
+    outputs = Dense(1, activation='relu')(drop1)
 
     model = tf.keras.Model(inputs, outputs)
 
     # print (model.summary())
 
     # custom_adam = optimizers.Adam(lr=0.0001)  # , decay=0.00003, amsgrad=True)
-    model.compile(loss=tf.keras.losses.BinaryCrossentropy(from_logits=True), optimizer='adam', metrics=['acc', 'mae'])
+    model.compile(loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True), optimizer='adam', metrics=['acc', 'mae'])
 
     tf.keras.utils.plot_model(model, show_shapes=True, rankdir="LR")
 
@@ -76,7 +76,9 @@ def reshaping_dataframe(dataframe):
 
 
 def build_dataframe():
-    dataframe = pd.read_csv('mirnas.csv', sep=';', thousands=',', engine='python')
+    dataframe = pd.read_csv('mirnas.csv', sep=',', thousands=',', engine='python')
+    print(dataframe.head())
+    dataframe['classe'] = pd.to_numeric(dataframe['classe'])
     return dataframe
 
 
@@ -89,7 +91,9 @@ def main():
 
     model = build_cnn(x_training)
     train_cnn(model, x_training, y_training, x_validation, y_validation)
-    print(model)
+
+    accuracy = model.evaluate(x_validation[:2])
+    print("Accuracy", accuracy)
 
 
 if __name__ == '__main__':
